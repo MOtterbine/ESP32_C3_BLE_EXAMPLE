@@ -31,14 +31,15 @@ std::mutex msgMutex;
 
 enum UserCommands
 {
-  PWM_0 = 0x00,
-  PWM_100 = 0x01
+  PWM_OFF = 0x00,
+  PWM_ON = 0x01
 };
 
 class ExampleBLEService : protected BaseBLEService{
 
   private:
     Generic_LM75 temperature;
+    byte PWMValue = 100;
   public: 
   /// @brief Starts BLE service for this device.
   /// @param _deviceName Device name as advertised through Bluetooth LE 
@@ -175,37 +176,51 @@ class ExampleBLEService : protected BaseBLEService{
     // ****************** Button **********************
     if (buttonChanged) {
       pByteCharacteristic->writeValue(buttonValue);
-    //  ((BLEByteCharacteristic*)GetCharacteristicByID(UUID_CHARACTERISTIC_COMMAND))->writeValue(!buttonValue);
-      sprintf(pWorkingBuffer, "Button %s", buttonValue==0?"Release":"Press");
-      SetMessage(pWorkingBuffer);
+      // only toggle the LED value on press
+      if(buttonValue == 1)
+      {
+        if(GetLED() == 0) SetLED(0x01);
+        else SetLED(0x00);
+      }
+      //  sprintf(pWorkingBuffer, "Button %s", buttonValue==0?"Release":"Press");
+   //   SetMessage(pWorkingBuffer);
     }
 
     pByteCharacteristic = ((BLEByteCharacteristic*)GetCharacteristicByID(UUID_CHARACTERISTIC_PWM));
     if (pByteCharacteristic->written()) {
 
       if(pByteCharacteristic->value() > 100) pByteCharacteristic->writeValue(100);
-      int val = (pByteCharacteristic->value()*MAX_DUTY_CYCLE)/100;
+      PWMValue = pByteCharacteristic->value();
+      int val = (PWMValue*MAX_DUTY_CYCLE)/100;
       ledcWrite(PWMChannel, val);
 
       sprintf(pWorkingBuffer, "PWM Set: %d%%", pByteCharacteristic->value());
       SetMessage(pWorkingBuffer);
+      if(PWMValue == 0)
+      {
+          SetLED(0x00);
+      } else SetLED(0x01);
+
 
     }
 
     pByteCharacteristic = ((BLEByteCharacteristic*)GetCharacteristicByID(UUID_CHARACTERISTIC_LED_SWITCH));
-    if (pByteCharacteristic->written()) {
+    if (pByteCharacteristic->written() || buttonChanged) {
 
       switch(pByteCharacteristic->value())
       {
-        case UserCommands::PWM_0:
+        case UserCommands::PWM_OFF:
           //ledcWrite(PWMChannel, 0);
           SetPWM(0);
-          SetMessage("PWM Set: 0%");
+          SetMessage("PWM Off: 0%");
           break;
-        case UserCommands::PWM_100:
+        case UserCommands::PWM_ON:
           //ledcWrite(PWMChannel, MAX_DUTY_CYCLE);
-          SetPWM(100);
-          SetMessage("PWM Set: 100%");
+          SetPWM(PWMValue);
+          sprintf(pWorkingBuffer, "PWM On: %d%%", PWMValue);
+          SetMessage(pWorkingBuffer);
+
+         // SetMessage("PWM Set: 100%");
           break;
       }
     }

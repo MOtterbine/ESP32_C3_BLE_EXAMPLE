@@ -38,7 +38,7 @@
     // for temp sensor (I2C)
     Wire.begin();
     
-    // Setup and run Bluetooth Low Energy (BLE)
+    // Setup and run Bluetooth Low Energy (BLE) Server
     BLEMainService.Start(BLUETOOTH_VISIBLE_NAME, UUID_SERVICE_ID_MAIN, BLEEventHandler);
 
     xTaskCreate(PollData, "Poll Data", 2000, NULL, 1, NULL);
