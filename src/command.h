@@ -23,11 +23,8 @@
   typedef void (*void_ptr)(void);
 
 
-
-  float Voltage = 0.0f;
   void PollData(void * params)
   {
-    double temp = 0.0;
     for(;;) // never to leave
     {
       BLEMainService.PollData();

@@ -41,8 +41,7 @@
     // Setup and run Bluetooth Low Energy (BLE)
     BLEMainService.Start(BLUETOOTH_VISIBLE_NAME, UUID_SERVICE_ID_MAIN, BLEEventHandler);
 
-    // uncomment to poll temperature
-    xTaskCreate(PollData, "Poll Temperature", 2000, NULL, 1, NULL);
+    xTaskCreate(PollData, "Poll Data", 2000, NULL, 1, NULL);
     xTaskCreate(PollBLE, "Poll BLE Events", 4000, NULL, 1, NULL);
 
   }
