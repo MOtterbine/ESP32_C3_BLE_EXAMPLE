@@ -11,16 +11,8 @@
 #define RX_GPIO_NUM 20
 
 
-  uint tempVal = 0;
-  String _message;
-
-  String inputBuffer;
-
   /// @brief Serial channel used to send debug information
   Stream * pDebugChannel = __null;
-  char EOT = '>';
-  // pointer to a void function
-  typedef void (*void_ptr)(void);
 
 
   void PollData(void * params)
