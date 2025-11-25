@@ -68,7 +68,6 @@ class ExampleBLEService : protected BaseBLEService{
     std::lock_guard<std::mutex> guard(msgMutex);
     pStrCharacteristic = ((BLEStringCharacteristic*)GetCharacteristicByID(UUID_CHARACTERISTIC_MESSAGE));
     pStrCharacteristic->writeValue(_val);
-    pStrCharacteristic->broadcast();
   }
 
   /***************************** Temperature ******************************/
@@ -99,9 +98,7 @@ class ExampleBLEService : protected BaseBLEService{
     if(_val > 100) _val = 100;
     int val = (_val*MAX_DUTY_CYCLE)/100;
     ledcWrite(PWMChannel, val);
-
     pByteCharacteristic->writeValue(_val);
-    pByteCharacteristic->broadcast();
   }
 
   /******************************** LED (binary) *********************************/
@@ -156,9 +153,17 @@ class ExampleBLEService : protected BaseBLEService{
 
   void PollData()
   {
-    // double temp = temperature.readTemperatureC();
-    // SetTemperature((temp*1.8)+32);
-    SetTemperature(temperature.readTemperatureF());
+    try
+    {
+      // double temp = temperature.readTemperatureC();
+      // SetTemperature((temp*1.8)+32);
+      SetTemperature(temperature.readTemperatureF());
+    }
+    catch(const std::exception& e)
+    {
+      //std::cerr << e.what() << '\n';
+    }
+
   }
 
   void PollBLE() override
@@ -201,7 +206,6 @@ class ExampleBLEService : protected BaseBLEService{
           SetLED(0x00);
       } else SetLED(0x01);
 
-
     }
 
     pByteCharacteristic = ((BLEByteCharacteristic*)GetCharacteristicByID(UUID_CHARACTERISTIC_LED_SWITCH));
@@ -219,8 +223,6 @@ class ExampleBLEService : protected BaseBLEService{
           SetPWM(PWMValue);
           sprintf(pWorkingBuffer, "PWM On: %d%%", PWMValue);
           SetMessage(pWorkingBuffer);
-
-         // SetMessage("PWM Set: 100%");
           break;
       }
     }
