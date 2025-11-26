@@ -14,7 +14,7 @@ class BaseBLEService {
 
 protected:
   BLEService *pMainService;
-  bool buttonChanged = false;
+
   int dutyCycle = 100;
 
   const BLECharacteristic * GetCharacteristicByID(const char * _uuid)

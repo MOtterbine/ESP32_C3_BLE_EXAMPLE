@@ -40,6 +40,7 @@ class ExampleBLEService : protected BaseBLEService{
   private:
     Generic_LM75 temperature;
     byte PWMValue = 100;
+    bool buttonChanged = false;
   public: 
   /// @brief Starts BLE service for this device.
   /// @param _deviceName Device name as advertised through Bluetooth LE 
@@ -58,7 +59,13 @@ class ExampleBLEService : protected BaseBLEService{
 
   }
 
-    /***************************** Device Message ******************************/
+
+  void SetButtonChanged()
+  {
+    buttonChanged = true;
+  }
+
+  /***************************** Device Message ******************************/
   const String GetMessage()
   {
     return ((BLEStringCharacteristic*)GetCharacteristicByID(UUID_CHARACTERISTIC_MESSAGE))->value();
@@ -120,6 +127,10 @@ class ExampleBLEService : protected BaseBLEService{
 
   void SetButton(byte _val)
   {
+
+    pByteCharacteristic = ((BLEByteCharacteristic*)GetCharacteristicByID(UUID_CHARACTERISTIC_BUTTON));
+    // has the value changed since the last read
+    buttonChanged = pByteCharacteristic->value() != _val;
     ((BLEByteCharacteristic*)GetCharacteristicByID(UUID_CHARACTERISTIC_BUTTON))->writeValue(_val);
   }
 
@@ -173,7 +184,6 @@ class ExampleBLEService : protected BaseBLEService{
     
     // read the current button pin state
     char buttonValue = digitalRead(buttonPin);
-
     pByteCharacteristic = ((BLEByteCharacteristic*)GetCharacteristicByID(UUID_CHARACTERISTIC_BUTTON));
     // has the value changed since the last read
     buttonChanged = pByteCharacteristic->value() != buttonValue;
@@ -181,33 +191,9 @@ class ExampleBLEService : protected BaseBLEService{
     // ****************** Button **********************
     if (buttonChanged) {
       pByteCharacteristic->writeValue(buttonValue);
-      // only toggle the LED value on press
-      if(buttonValue == 1)
-      {
-        if(GetLED() == 0) SetLED(0x01);
-        else SetLED(0x00);
-      }
-      //  sprintf(pWorkingBuffer, "Button %s", buttonValue==0?"Release":"Press");
-   //   SetMessage(pWorkingBuffer);
     }
 
-    pByteCharacteristic = ((BLEByteCharacteristic*)GetCharacteristicByID(UUID_CHARACTERISTIC_PWM));
-    if (pByteCharacteristic->written()) {
-
-      if(pByteCharacteristic->value() > 100) pByteCharacteristic->writeValue(100);
-      PWMValue = pByteCharacteristic->value();
-      int val = (PWMValue*MAX_DUTY_CYCLE)/100;
-      ledcWrite(PWMChannel, val);
-
-      sprintf(pWorkingBuffer, "PWM Set: %d%%", pByteCharacteristic->value());
-      SetMessage(pWorkingBuffer);
-      if(PWMValue == 0)
-      {
-          SetLED(0x00);
-      } else SetLED(0x01);
-
-    }
-
+    // ***************************** LED Switch *************************************
     pByteCharacteristic = ((BLEByteCharacteristic*)GetCharacteristicByID(UUID_CHARACTERISTIC_LED_SWITCH));
     if (pByteCharacteristic->written() || buttonChanged) {
 
@@ -226,6 +212,26 @@ class ExampleBLEService : protected BaseBLEService{
           break;
       }
     }
+
+    // ******************************** PWM ****************************************
+    pByteCharacteristic = ((BLEByteCharacteristic*)GetCharacteristicByID(UUID_CHARACTERISTIC_PWM));
+    if (pByteCharacteristic->written()) {
+
+      if(pByteCharacteristic->value() > 100) pByteCharacteristic->writeValue(100);
+      PWMValue = pByteCharacteristic->value();
+      int val = (PWMValue*MAX_DUTY_CYCLE)/100;
+      ledcWrite(PWMChannel, val);
+
+      sprintf(pWorkingBuffer, "PWM Set: %d%%", pByteCharacteristic->value());
+      SetMessage(pWorkingBuffer);
+      if(PWMValue == 0)
+      {
+          SetLED(0x00);
+      } else SetLED(0x01);
+
+    }
+
+
   }
 
 } BLEMainService;
